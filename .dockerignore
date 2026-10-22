@@ -1,0 +1,10 @@
+.git
+**/vendor
+**/node_modules
+**/.env
+**/.env.*
+**/storage/logs/*.log
+tests/output
+**/bootstrap/cache/*.php
+**/__pycache__
+**/.phpunit.cache
