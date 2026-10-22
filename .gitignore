@@ -1,0 +1,5 @@
+.DS_Store
+*.log
+.env.local
+/tests/output/
+__pycache__/
