@@ -1,32 +1,34 @@
 # PHP Isolated Lab
 
 ```mermaid
-flowchart LR
+flowchart TB
     browser["ホストのブラウザ"]
-    gateway["gateway · entrance + labnet\n外向き通信は拒否・転送先は3つだけ"]
-    subgraph labnet["labnet · internal: true · 外向き経路なし"]
-        nginx["nginx 1.27.5\nLaravel の入口 :80"]
-        app["app · PHP 8.3.35 FPM\nLaravel · www-data :9000"]
-        wp["wordpress · PHP 8.3\nApache + mod_php · www-data :8080"]
-        db[("MySQL 8.0.39\nlaravel_db / wp_db :3306")]
-        redis[("Redis 7.4.2\n認証必須 :6379")]
-        mail["Mailpit v1.27.10\nSMTP :1025 / UI :8025"]
+    gateway["gateway · entrance + labnet<br/>127.0.0.1 の3ポートを中継<br/>外向き通信は拒否"]
+    browser -->|8080 / 8081 / 8025| gateway
+    subgraph labnet["labnet · internal: true"]
+        nginx["nginx 1.27.5<br/>Laravel の入口 :80"]
+        app["app · PHP 8.3.35 FPM :9000<br/>Laravel · www-data<br/>保存: laravel_storage"]
+        wp["wordpress · PHP 8.3<br/>Apache + mod_php :8080 · www-data<br/>保存: wordpress_data"]
+        db[("MySQL 8.0.39 :3306<br/>laravel_db / wp_db<br/>保存: mysql_data")]
+        redis[("Redis 7.4.2 :6379<br/>認証必須<br/>保存: redis_data")]
+        mail["Mailpit v1.27.10<br/>SMTP :1025 / UI :8025<br/>保存: mailpit_data"]
         nginx -->|FastCGI| app
         app -->|laravel_db| db
         wp -->|wp_db| db
         app -->|セッション・キャッシュ・キュー| redis
         app -->|SMTP| mail
     end
-    browser -->|127.0.0.1:8080 / 8081 / 8025| gateway
     gateway -->|8080 → nginx:80| nginx
     gateway -->|8081 → wordpress:8080| wp
     gateway -->|8025 → mailpit:8025| mail
-    db --- mysqlvol[(mysql_data)]
-    redis --- redisvol[(redis_data)]
-    wp --- wpvol[(wordpress_data)]
-    app --- storagevol[(laravel_storage)]
-    mail --- mailvol[(mailpit_data)]
 ```
+
+<details>
+<summary>Mermaid が読み込めない場合は、同じ構成図を画像で表示</summary>
+
+![Mermaid から描画した構成図](docs/architecture.png)
+
+</details>
 
 PHP 8.3.35 の Laravel と、公式 WordPress の PHP 8.3 / Apache を、端末内だけで検証する環境です。
 指定された古い版を再現するためのものです。本番用の資格情報は入れないでください。
@@ -80,6 +82,7 @@ DB の接続先は `wp_db` として設定済みです。追加の言語の取�
 │   ├── nginx/default.conf      # Laravel public への転送
 │   ├── mysql/init/001-lab.sql   # 2DB、専用ユーザー、users とサンプル3件
 │   └── redis/redis.conf        # requirepass と AOF 保存
+├── docs/architecture.png       # 冒頭の Mermaid から描画した画像版
 ├── scripts/check.sh            # 起動からメール受信・隔離までの確認
 └── tests/                      # Laravel とホストからの疎通確認
 ```
